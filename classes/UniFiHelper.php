@@ -9,7 +9,7 @@
 
 namespace TSD\UniFiGuestHubSpotPortal;
 
-use UniFi_API\Client;
+use UniFi_API;
 
 class UniFiHelper
 {
@@ -32,7 +32,7 @@ class UniFiHelper
 
 	private function connect()
 	{
-		$this->connection = new UniFi_API\Client($this->settings['unifi_user'], $this->settings['unifi_password'], $this->settings['unifi_controller_url'], $this->settings['unifi_site'], $this->settings['unifi_version']);
+		$this->connection = new \UniFi_API\Client($this->settings['unifi_user'], $this->settings['unifi_password'], $this->settings['unifi_controller_url'], $this->settings['unifi_site'], $this->settings['unifi_version']);
 		
 		$this->connection->login();	
 	}
