@@ -1,0 +1,62 @@
+body{
+	background-color: #000;
+	text-align: center;
+	color: #fff;
+	font-family: Montserrat;
+	font-size: 16px;	
+}
+
+#content{
+	width: 90%;
+	margin: 0 auto 0 auto;
+}
+
+img {
+	max-width: 600px;
+	height: auto;
+	margin: 50px;
+}
+
+@media screen and (max-width:800px){
+	img {
+		max-width: 90%;
+		height: auto;
+		margin: 10px;
+	}
+}
+
+h1{
+	font-size: 20px;
+	font-weight: normal;
+	padding: 0;
+	margin: 50px 0 20px 0;
+}
+
+div{
+	margin: 20px 0 20px 0;
+}
+
+.button{
+	border-radius: 5px;
+	background-color: rgb(255, 85, 0);
+	text-transform: uppercase;
+	padding: 20px;
+	border: none;
+	color: #fff;
+	font-family: Montserrat;
+	font-weight: bold;
+}
+
+.email{
+	padding: 20px;
+	border-radius: 5px;
+	border: none;
+	font-family: Montserrat;
+	box-sizing: border-box;
+	font-size: 16px;
+}
+
+.tick{
+	font-size: 80px;
+	color: rgb(255, 85, 0);
+}
