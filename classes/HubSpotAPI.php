@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * HubSpotContact Class
+ *
+ * 
+ * 
+ */
+
+namespace TSD\UniFiGuestHubSpotPortal;
+
 class HubSpotContact
 {
 	public $isAuthorised = false;

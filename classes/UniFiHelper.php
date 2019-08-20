@@ -1,6 +1,17 @@
 <?php
 
-class Unifi
+/**
+ * UniFi Guest Portal with HubSpot integration
+ *
+ * A basic guest WiFi portal which authorises guests based on their
+ * HubSpot lead status.
+ */
+
+namespace TSD\UniFiGuestHubSpotPortal;
+
+use UniFi_API\Client;
+
+class UniFiHelper
 {
 	public $connection;
 	

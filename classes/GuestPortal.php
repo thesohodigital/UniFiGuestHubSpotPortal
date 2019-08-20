@@ -1,5 +1,8 @@
 <?php
 
+namespace TSD\UniFiGuestHubSpotPortal;
+
+use Twig;
 use Medoo\Medoo;
 
 class GuestPortal
@@ -11,6 +14,7 @@ class GuestPortal
 		'unifi_controller_url' => 'https://192.168.1.221:8443',
 		'unifi_site' => '',
 		'unifi_version' => '5.10.25',
+		'unifi_session_mins' => '',
 	);
 	
 	/* Instance of the Twig PHP template engine */
@@ -41,9 +45,9 @@ class GuestPortal
 	{
 		$this->settings = $settings;
 		
-		$loader = new Twig_Loader_Filesystem('./templates/');
+		$loader = new \Twig\Loader\FilesystemLoader('./templates/');
 
-		$this->Twig = new Twig_Environment($loader, array(
+		$this->Twig = new \Twig\Environment($loader, array(
 				'cache' => false,
 				'debug' => true,
 			));		
@@ -59,7 +63,7 @@ class GuestPortal
 		{
 			if(key_exists($k, $this->formData))
 			{
-				$this->formData[ $k ] = strtolower($v);
+				$this->formData[ $k ] = strtolower(trim($v));
 			}
 		}
 		
@@ -69,7 +73,7 @@ class GuestPortal
 		{
 			if(key_exists($k, $this->formData))
 			{
-				$this->formData[ $k ] = strtolower($v);
+				$this->formData[ $k ] = strtolower(trim($v));
 			}
 		}
 
@@ -123,7 +127,7 @@ class GuestPortal
 				
 				try
 				{		
-					$Unifi = new Unifi($this->settings);
+					$Unifi = new UniFiHelper($this->settings);
 					
 					if($Unifi->authoriseGuest($this->formData['id'], 1, $this->formData['ap']))
 					{
@@ -174,7 +178,7 @@ class GuestPortal
 
 	function recordMac(&$Unifi, $email, $mac)
 	{
-			$db = new Medoo([
+			$db = new \Medoo\Medoo([
 				'database_type' => 'sqlite',
 				'database_file' => './database/guests.db'
 			]);
