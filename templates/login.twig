@@ -1,15 +1,15 @@
 {% extends "skeleton.twig" %}
-		{% block body %}
-			<h1>Guest WiFi</h1>
-			<div>{% if loginMsg == "" %}Enter your email address for free WiFi access:{% else %}{{ loginMsg }}{% endif %}</div>
-			
-			<form method='post' action='/'>
-			<input type='hidden' name='id' value='{{values.id}}' />
-			<input type='hidden' name='ap' value='{{values.ap}}' />
-			<input type='hidden' name='url' value='{{values.url}}' />
-			
-			<input type='text' name='email' type='email' class='email' placeholder='example@domain.com' >
-			<button class='button'>Login</button>
-			
-			</form>
-		{% endblock %}
+        {% block body %}
+            <h1>Guest WiFi</h1>
+            <div>{% if loginMsg == "" %}Enter your email address for free WiFi access:{% else %}{{ loginMsg }}{% endif %}</div>
+            
+            <form method='post' action='/'>
+            <input type='hidden' name='id' value='{{values.id}}' />
+            <input type='hidden' name='ap' value='{{values.ap}}' />
+            <input type='hidden' name='url' value='{{values.url}}' />
+            
+            <input type='text' name='email' type='email' class='email' placeholder='example@domain.com' >
+            <button class='button'>Login</button>
+            
+            </form>
+        {% endblock %}

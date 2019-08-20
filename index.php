@@ -14,18 +14,35 @@ require_once('./classes/HubSpotAPI.php');
 require_once('./classes/UniFiHelper.php');
 require_once('./classes/GuestPortal.php');
 
+/**
+ * Basic application settings are defined here
+ *
+ * hubspot          api_key             your HubSpot API key
+ * unifi            user                an admin username for your UniFi Controller
+ * unifi            password            password for the UniFi Controller user
+ * unifi            controller_url      the URL of your controller, note this MSUT start with https://
+ * unifi            site                your site name, which can be found in the controller URL
+ * unifi            version             the version of your controller
+ * guest_session    duration            number of minutes to authorise the guest for
+ */
 
-$params = array(
-	'hubspot_api_key' => '',			// Your HubSpot API key
-	'unifi_user' => '',					// UniFi Controller admin account username
-	'unifi_password' => '',				// UniFi Controller admin account password
-	'unifi_controller_url' => '',		// UnnFi Controller URL (note: MUST start with https://)
-	'unifi_site' => '',					// UniFi Controller site ID (found in the URL)
-	'unifi_version' => '5',				// Version of your UniFi Controller
-	'unifi_session_mins' => 60*24*14,	// Number of minutes guest session should last for	
-);
-	
-new GuestPortal($params);
+$settings = [
+        'hubspot' => [
+            'api_key' => ''
+        ],
+        'unifi' => [
+            'user' => 'api',
+            'password' => '',
+            'controller_url' => 'https://192.168.1.221:8443',
+            'site' => '',
+            'version' => '5.10.25',
+        ],
+        'guest_session' => [
+            'duration' => '',    
+        ]
+    ];
+    
+new GuestPortal($settings);
 
 
 ?>

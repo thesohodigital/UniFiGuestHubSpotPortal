@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<title>WiFi Login</title>
-		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<link rel="stylesheet" href="style.css" />		
-		{% if redirect == true %}
-		<meta http-equiv="refresh" content="3;url=https://bbc.co.uk" />
-		{% endif %}
+    <head>
+        <title>WiFi Login</title>
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="style.css" />        
+        {% if redirect == true %}
+        <meta http-equiv="refresh" content="3;url=https://bbc.co.uk" />
+        {% endif %}
 
-	</head>
-	<body>
-		<div id='content'>
-		{% block body %}{% endblock %}
-		</div>
-	</body>
+    </head>
+    <body>
+        <div id='content'>
+        {% block body %}{% endblock %}
+        </div>
+    </body>
 </html>
