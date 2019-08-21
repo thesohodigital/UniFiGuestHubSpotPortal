@@ -7,6 +7,7 @@ use Medoo;
 
 class GuestPortal
 {
+ 
     private $settings = [
         'hubspot' => [
             'api_key' => ''
@@ -117,7 +118,7 @@ class GuestPortal
 
             $this->renderLogin($this->strings['error']['generic']);
         }
-        elseif(! filter_var($this->formData['email'], FILTER_VALIDATE_EMAIL) && strlen($this->formData['email']) > 255)
+        elseif(! filter_var($this->formData['email'], FILTER_VALIDATE_EMAIL) || strlen($this->formData['email']) > 255)
         {
             /* If the email address is not in a valid format, show an error message */
             $this->renderLogin($this->strings['error']['email_format']);
@@ -129,9 +130,16 @@ class GuestPortal
         }
         else
         {
-            $Contact = new HubSpotContact($this->formData['email'], $this->settings['hubspot']['api_key']);
+            $Guest = new Guest();
             
-            if ($Contact->isAuthorised)
+            $Guest->email = $this->formData['email'];
+            $Guest->mac = $this->formData['id'];
+            $Guest->accessPoint = $this->formData['ap'];
+            $Guest->apiKey = $this->settings['hubspot']['api_key'];
+            
+            $Guest->authenticate();
+            
+            if ($Guest->isAuthorised)
             {
                 /*
                     If the guest is a valid HubSpot contact, then try to authorise them
@@ -141,16 +149,19 @@ class GuestPortal
                  $Unifi = new UniFiHelper($this->settings['unifi']);
 
                  
-                    if($Unifi->authoriseGuest($this->formData['id'],
-                        $this->settings['guest_session']['duration'],
-                        $this->formData['ap']))
+                    if($Unifi->authoriseGuest($Guest->mac, $this->settings['guest_session']['duration'], $Guest->accessPoint))
                     {
-                        $this->recordMac($Unifi, $this->formData['email'], $this->formData['id']);
+                        $oldMac = $Guest->save();
+                        
+                        if($oldMac !== false)
+                        {
+                            $Unifi->unAuthoriseGuest($oldMac);
+                        }
+                        
                         $this->renderSuccess();
                     }
                     else
                     { 
-                        
                         $this->renderLogin($this->strings['error']['generic']);
                     }
             }
@@ -177,28 +188,6 @@ class GuestPortal
     {
         echo $this->Twig->render("login.twig", array('values' => $this->formData,
                                                      'loginMsg' => $msg,));
-    }
-
-    // FUNCTION
-    // Updates database
-
-    function recordMac(&$Unifi, $email, $newMac)
-    function recordMac(&$Unifi, $email, $newMac)
-    {
-            
-            $db = new GuestDatabase;
-            
-            $oldMac = $db->getGuestMac($email);
-            
-            if( ! is_null($oldMac) && $newMac != $oldMac)
-            {
-                $db->updateGuestMac($email, $newMac);
-                $Unifi->unAuthoriseGuest($oldMac);
-            }
-            else
-            {
-                $db->insertGuest($email, $newMac);     
-            }
     }
 
     // FUNCTION
