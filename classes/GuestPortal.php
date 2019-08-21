@@ -3,7 +3,7 @@
 namespace TSD\UniFiGuestHubSpotPortal;
 
 use Twig;
-use Medoo\Medoo;
+use Medoo;
 
 class GuestPortal
 {
@@ -44,7 +44,15 @@ class GuestPortal
              'url' => '',        // URL the client requested (often that of the vendor eg. https://captive.apple.com)
              'ssid' => '' ,        // SSID of the network the guest has connected to
              'email' => ''        // 
-        ];        
+        ];   
+
+    /**
+     * Debug
+     *
+     * Array of debug messages in the format
+     * ['msg' => (string), 'fatal' => (bool)]
+     */
+    private $debugMessages = array();
     
     function __construct($settings)
     {
@@ -121,7 +129,7 @@ class GuestPortal
         }
         else
         {
-            $Contact = new HubSpotContact($this->formData['email'], $this->settings['hubspot_api_key']);
+            $Contact = new HubSpotContact($this->formData['email'], $this->settings['hubspot']['api_key']);
             
             if ($Contact->isAuthorised)
             {
@@ -130,10 +138,9 @@ class GuestPortal
                     and show them a success page.
                 */
                 
-                try
-                {        
-                    $Unifi = new UniFiHelper($this->settings['unifi']);
-                    
+                 $Unifi = new UniFiHelper($this->settings['unifi']);
+
+                 
                     if($Unifi->authoriseGuest($this->formData['id'],
                         $this->settings['guest_session']['duration'],
                         $this->formData['ap']))
@@ -142,18 +149,10 @@ class GuestPortal
                         $this->renderSuccess();
                     }
                     else
-                    {
-                        throw new Exception();
+                    { 
+                        
+                        $this->renderLogin($this->strings['error']['generic']);
                     }
-                }
-                catch(Exception $e)
-                {
-                    /*
-                        Something probably went wrong with the UniFi API connection, we want to gracefully
-                        exit and show an error to the guest.
-                    */
-                    $this->renderLogin($this->strings['error']['generic']);
-                }
             }
             else
             {
@@ -166,7 +165,7 @@ class GuestPortal
     }
 
     // FUNCTION
-    // Shows a successful message and redirects to CrossFit website
+    // Shows a successful message and redirects
     function renderSuccess()
     {
         echo $this->Twig->render("success.twig", array('redirect' => true));        
@@ -183,34 +182,22 @@ class GuestPortal
     // FUNCTION
     // Updates database
 
-    function recordMac(&$Unifi, $email, $mac)
+    function recordMac(&$Unifi, $email, $newMac)
+    function recordMac(&$Unifi, $email, $newMac)
     {
-            $db = new \Medoo\Medoo([
-                'database_type' => 'sqlite',
-                'database_file' => './database/guests.db'
-            ]);
             
-            $db->create('GuestMacAddresses', [
-                'email' => [
-                    'VARCHAR(255)',
-                    'NOT NULL',
-                    'PRIMARY KEY'
-                ],
-                'mac' => [
-                    'VARCHAR(17)'
-                ]
-            ]);
+            $db = new GuestDatabase;
             
-            $user = $db->select('GuestMacAddresses', 'mac', ['email' => $email]);
+            $oldMac = $db->getGuestMac($email);
             
-            if(isset($user[0]) && $user[0]['mac'] != $mac)
+            if( ! is_null($oldMac) && $newMac != $oldMac)
             {
-                $db->update('GuestMacAddresses', ['mac' => $mac], ['email' => $email]);
-                $Unifi->unAuthoriseGuest($user[0]['mac']);
+                $db->updateGuestMac($email, $newMac);
+                $Unifi->unAuthoriseGuest($oldMac);
             }
             else
             {
-                $db->insert('GuestMacAddresses', ['mac' => $mac, 'email' => $email]);        
+                $db->insertGuest($email, $newMac);     
             }
     }
 

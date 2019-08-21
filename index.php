@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * UniFi Guest Portal with HubSpot integration
  *
@@ -11,6 +12,7 @@ namespace TSD\UniFiGuestHubSpotPortal;
 
 require_once('./vendor/autoload.php');
 require_once('./classes/HubSpotAPI.php');
+require_once('./classes/GuestDatabase.php');
 require_once('./classes/UniFiHelper.php');
 require_once('./classes/GuestPortal.php');
 

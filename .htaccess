@@ -1,0 +1,4 @@
+<IfModule mod_rewrite.c>
+	RewriteEngine on
+	RewriteRule ^guest\/s\/[a-zA-Z0-9]+\/(.*)$ /$1 [NC,L]
+</IfModule>

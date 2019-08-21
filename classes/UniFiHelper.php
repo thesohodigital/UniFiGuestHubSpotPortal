@@ -31,15 +31,16 @@ class UniFiHelper
 
     private function connect()
     {
-        $this->connection = new \UniFi_API\Client($this->settings['unifi_user'], $this->settings['unifi_password'], $this->settings['unifi_controller_url'], $this->settings['unifi_site'], $this->settings['unifi_version']);
-        
-        $this->connection->login();    
+        $this->connection = new \UniFi_API\Client($this->settings['user'], $this->settings['password'], $this->settings['controller_url'], $this->settings['site'], $this->settings['version']);
+        //$this->connection->set_debug(true);
+        $this->connection->login();
+        //var_dump($this->connection);
     }
     
     function authoriseGuest($mac, $duration, $ap)
     {
         $authResult = $this->connection->authorize_guest($mac, $duration, null, null, null, $ap);
-        
+        //var_dump($authResult);
         
         if ($authResult == "1")
         {
