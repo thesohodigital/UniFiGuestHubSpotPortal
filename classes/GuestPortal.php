@@ -8,21 +8,8 @@ use Medoo;
 class GuestPortal
 {
  
-    private $settings = [
-        'hubspot' => [
-            'api_key' => ''
-        ],
-        'unifi' => [
-            'user' => 'api',
-            'password' => '',
-            'controller_url' => 'https://192.168.1.221:8443',
-            'site' => '',
-            'version' => '5.10.25',
-        ],
-        'guest_session' => [
-            'duration' => '',    
-        ]
-    ];
+    /* Array of application settings */
+    private $settings = array();
     
     /* Instance of the Twig PHP template engine */
     private $Twig;
@@ -39,13 +26,17 @@ class GuestPortal
         
     /* Details of the guest's access request */
     private $formData = [
-            'id' => '',            // Client's MAC address
-             'ap' => '',        // Access point's MAC address
-             't' => '',            // Timestamp of request
-             'url' => '',        // URL the client requested (often that of the vendor eg. https://captive.apple.com)
-             'ssid' => '' ,        // SSID of the network the guest has connected to
-             'email' => ''        // 
-        ];   
+            'id' => '',         // Guest's MAC address
+            'ap' => '',        // Access point's MAC address
+            't' => '',         // Timestamp of request
+            'url' => '',       // URL the client requested (often that of the vendor eg. https://captive.apple.com)
+            'ssid' => '' ,     // SSID of the network the guest has connected to
+            'email' => '',      // Clients
+            'site' => '',
+        ];
+ 
+    private $Guest;
+    private $UniFiController;
 
     /**
      * Debug
@@ -64,13 +55,17 @@ class GuestPortal
         $this->Twig = new \Twig\Environment($loader, array(
                 'cache' => false,
                 'debug' => true,
-            ));        
+            ));     
+
+        $this->Guest = new Guest();
+        $this->UniFiController = new UnifiController($this->settings['unifi']);
         
         $this->run();
     }
     
     function run()
     {
+   
         // Populate any GET data array, we expect all of these to be completed
                              
         foreach ($_GET as $k => $v)
@@ -90,7 +85,14 @@ class GuestPortal
                 $this->formData[ $k ] = strtolower(trim($v));
             }
         }
-
+        
+        // Populate the UniFi site for which access is requested
+        if(! $this->setUniFiSite())
+        {
+            $this->renderLogin($this->strings['error']['generic']);
+            exit;
+        }
+        
         if(! isset($_POST['email']))
         {
             /* 
@@ -130,46 +132,42 @@ class GuestPortal
         }
         else
         {
-            $Guest = new Guest();
+            $this->Guest->email = $this->formData['email'];
+            $this->Guest->mac = $this->formData['id'];
+            $this->Guest->accessPoint = $this->formData['ap'];
+            $this->Guest->apiKey = $this->settings['hubspot']['api_key'];
             
-            $Guest->email = $this->formData['email'];
-            $Guest->mac = $this->formData['id'];
-            $Guest->accessPoint = $this->formData['ap'];
-            $Guest->apiKey = $this->settings['hubspot']['api_key'];
+            $this->Guest->authenticate();
             
-            $Guest->authenticate();
-            
-            if ($Guest->isAuthorised)
+            if ($this->Guest->isAuthorised)
             {
                 /*
                     If the guest is a valid HubSpot contact, then try to authorise them
                     and show them a success page.
                 */
                 
-                 $Unifi = new UniFiHelper($this->settings['unifi']);
-
+                $this->UniFiController->connect();
                  
-                    if($Unifi->authoriseGuest($Guest->mac, $this->settings['guest_session']['duration'], $Guest->accessPoint))
+                if($this->UniFiController->authoriseGuest($this->Guest->mac, $this->settings['guest_session']['duration'], $this->Guest->accessPoint))
+                {
+                    $oldMac = $this->Guest->save();
+                    
+                    if($oldMac !== false)
                     {
-                        $oldMac = $Guest->save();
-                        
-                        if($oldMac !== false)
-                        {
-                            $Unifi->unAuthoriseGuest($oldMac);
-                        }
-                        
-                        $this->renderSuccess();
+                        $this->UniFi->unAuthoriseGuest($oldMac);
                     }
-                    else
-                    { 
-                        $this->renderLogin($this->strings['error']['generic']);
-                    }
+                    
+                    $this->renderSuccess();
+                }
+                else
+                { 
+                    $this->renderLogin($this->strings['error']['generic']);
+                }
             }
             else
             {
                 /* Show an  error if the member is not recognised */
                 $this->renderLogin($this->strings['error']['email_invalid']);
-                
             }
         }
 
@@ -203,6 +201,57 @@ class GuestPortal
         }
         
         return true;
+    }
+    
+    private function setUniFiSite()
+    {
+        /**
+         * If the site is already set, then it has been defined in the settings
+         * file so we will use that. If not, then try to find it via a couple
+         * of methods.
+         */
+        
+        if($this->settings['unifi']['site'] == "")
+        {
+            /**
+             * If the site was passed through the login form then use that
+             * or if not, try and detect the site from the URL.
+             */
+             
+            if($this->formData['site'] != "")
+            {
+               $this->settings['unifi']['site'] == $this->formData['site'];
+            }
+            else
+            {
+                $this->settings['unifi']['site'] = $this->detectSiteFromUrl();
+            }
+        }
+        
+        if($this->settings['unifi']['site'] == "")
+        {
+            $this->debugMessage[] = "Site is not specified in settings and it could not be automatically detected.";
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+    
+    private function detectSiteFromUrl()
+    {
+        $matches = array();
+        $site = "";
+        
+        preg_match('/\/guest\/s\/([a-zA-Z0-9]+)\/.*/', $_SERVER['REQUEST_URI'], $matches);
+        
+        if(isset($matches[1]))
+        {
+            $site = $matches[1];
+        }
+        
+        return $site;
     }
 
 }
