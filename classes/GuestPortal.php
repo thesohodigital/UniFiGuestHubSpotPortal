@@ -7,10 +7,6 @@ use Medoo;
 
 class GuestPortal
 {
- 
-    /* Array of application settings */
-    private $settings = array();
-    
     /* Instance of the Twig PHP template engine */
     private $Twig;
     
@@ -46,10 +42,8 @@ class GuestPortal
      */
     private $debugMessages = array();
     
-    function __construct($settings)
-    {
-        $this->settings = $settings;
-        
+    function __construct()
+    {   
         $loader = new \Twig\Loader\FilesystemLoader('./templates/');
 
         $this->Twig = new \Twig\Environment($loader, array(
@@ -58,14 +52,13 @@ class GuestPortal
             ));     
 
         $this->Guest = new Guest();
-        $this->UniFiController = new UnifiController($this->settings['unifi']);
+        $this->UniFiController = new UniFiController();
         
         $this->run();
     }
     
     function run()
     {
-   
         // Populate any GET data array, we expect all of these to be completed
                              
         foreach ($_GET as $k => $v)
@@ -87,11 +80,7 @@ class GuestPortal
         }
         
         // Populate the UniFi site for which access is requested
-        if(! $this->setUniFiSite())
-        {
-            $this->renderLogin($this->strings['error']['generic']);
-            exit;
-        }
+        $this->setUniFiSite();
         
         if(! isset($_POST['email']))
         {
@@ -101,7 +90,7 @@ class GuestPortal
                 and we'll display a 'something went wrong' error. If they are all present, then
                 we will show the login page because everything looks normal.
             */
-            if (! $this->validateMandatory(array('id', 'ap', 'ssid'), $this->formData))
+            if (! $this->validateMandatory(array('id', 'ap', 'ssid', 'site'), $this->formData))
             {
                 $this->renderLogin($this->strings['error']['generic']);
             }
@@ -135,7 +124,7 @@ class GuestPortal
             $this->Guest->email = $this->formData['email'];
             $this->Guest->mac = $this->formData['id'];
             $this->Guest->accessPoint = $this->formData['ap'];
-            $this->Guest->apiKey = $this->settings['hubspot']['api_key'];
+            $this->Guest->apiKey = Settings::$hubspot['api_key'];
             
             $this->Guest->authenticate();
             
@@ -148,7 +137,7 @@ class GuestPortal
                 
                 $this->UniFiController->connect();
                  
-                if($this->UniFiController->authoriseGuest($this->Guest->mac, $this->settings['guest_session']['duration'], $this->Guest->accessPoint))
+                if($this->UniFiController->authoriseGuest($this->Guest->mac, Settings::$session['duration'], $this->Guest->accessPoint))
                 {
                     $oldMac = $this->Guest->save();
                     
@@ -177,7 +166,7 @@ class GuestPortal
     // Shows a successful message and redirects
     function renderSuccess()
     {
-        echo $this->Twig->render("success.twig", array('redirect' => true));        
+        echo $this->Twig->render("success.twig", array('redirect' => false));        
     }
 
     // FUNCTION
@@ -211,24 +200,25 @@ class GuestPortal
          * of methods.
          */
         
-        if($this->settings['unifi']['site'] == "")
+        
+        
+        if(Settings::$unifi['site'] == "")
         {
             /**
              * If the site was passed through the login form then use that
              * or if not, try and detect the site from the URL.
              */
              
-            if($this->formData['site'] != "")
+            if($this->formData['site'] == "")
             {
-               $this->settings['unifi']['site'] == $this->formData['site'];
+                
+                $this->formData['site'] = $this->detectSiteFromUrl();
             }
-            else
-            {
-                $this->settings['unifi']['site'] = $this->detectSiteFromUrl();
-            }
+            
+            Settings::$unifi['site'] = $this->formData['site'];
         }
         
-        if($this->settings['unifi']['site'] == "")
+        if(Settings::$unifi['site'] == "")
         {
             $this->debugMessage[] = "Site is not specified in settings and it could not be automatically detected.";
             return false;

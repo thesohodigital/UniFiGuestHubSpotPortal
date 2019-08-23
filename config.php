@@ -15,24 +15,23 @@
  * guest_session    max_devices         max number of devices a guest may connect (oldest devices deauthorised if limit exceeded)
  */
 
-
 $settings = [
         'hubspot' => [
             'api_key' => ''
         ],
         'unifi' => [
-            'user' => 'api',
+            'user' => '',
             'password' => '',
-            'controller_url' => 'https://192.168.1.221:8443',
+            'controller_url' => '',
             'site' => '',
-            'version' => '5.10.25',
+            'version' => '',
         ],
-        'guest_session' => [
-            'duration' => '20',  
+        'session' => [
+            'duration' => '120',  
             'max_devices' => '2',
         ],
         'database' => [
-            'location' => '/var/www/crossfit-portal/database/guests.db',
+            'file' => '/path/to/db/guests.db',
         ]
     ];
     

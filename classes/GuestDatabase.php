@@ -13,7 +13,7 @@ class GuestDatabase
     {
         if ($this->pdo == null)
         {
-            $this->pdo = new PDO("sqlite:".$this->databaseFile);
+            $this->pdo = new PDO("sqlite:".Settings::$database['file']);
             $this->createSchema();
         }
     }

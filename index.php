@@ -17,9 +17,11 @@ require_once('./classes/Guest.php');
 require_once('./classes/GuestDatabase.php');
 require_once('./classes/UniFiController.php');
 require_once('./classes/GuestPortal.php');
-require_once('./settings.php');
+require_once('./classes/Settings.php');
+
+Settings::load($settings);
     
-new GuestPortal($settings);
+new GuestPortal();
 
 
 ?>

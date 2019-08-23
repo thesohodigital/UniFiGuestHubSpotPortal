@@ -15,22 +15,14 @@ class UniFiController
 {
     private $connection;
     
-    private $settings = [
-            'user' => 'api',
-            'password' => '',
-            'controller_url' => '',
-            'site' => '',
-            'version' => '',
-        ];
-    
-    function __construct($settings)
+    function __construct()
     {
-        $this->settings = $settings;
+
     }
 
     public function connect()
     {
-        $this->connection = new \UniFi_API\Client($this->settings['user'], $this->settings['password'], $this->settings['controller_url'], $this->settings['site'], $this->settings['version']);
+        $this->connection = new \UniFi_API\Client(Settings::$unifi['user'], Settings::$unifi['password'], Settings::$unifi['controller_url'], Settings::$unifi['site'], Settings::$unifi['version']);
         $this->connection->login();
     }
     
