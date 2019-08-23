@@ -11,9 +11,9 @@ namespace TSD\UniFiGuestHubSpotPortal;
 
 use UniFi_API;
 
-class UniFiHelper
+class UniFiController
 {
-    public $connection;
+    private $connection;
     
     private $settings = [
             'user' => 'api',
@@ -26,21 +26,17 @@ class UniFiHelper
     function __construct($settings)
     {
         $this->settings = $settings;
-        $this->connect();
     }
 
-    private function connect()
+    public function connect()
     {
         $this->connection = new \UniFi_API\Client($this->settings['user'], $this->settings['password'], $this->settings['controller_url'], $this->settings['site'], $this->settings['version']);
-        //$this->connection->set_debug(true);
         $this->connection->login();
-        //var_dump($this->connection);
     }
     
-    function authoriseGuest($mac, $duration, $ap)
+    public function authoriseGuest($mac, $duration, $ap)
     {
         $authResult = $this->connection->authorize_guest($mac, $duration, null, null, null, $ap);
-        //var_dump($authResult);
         
         if ($authResult == "1")
         {
@@ -50,7 +46,7 @@ class UniFiHelper
         return false;
     }
 
-    function unAuthoriseGuest($mac)
+    public function unAuthoriseGuest($mac)
     {
         $this->connection->unauthorize_guest($mac);
     }
