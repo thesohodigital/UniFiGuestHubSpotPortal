@@ -52,16 +52,18 @@ class GuestPortal
                 'debug' => true,
             ));     
 
-        $this->Guest = new Guest();
+        $this->loadRequestVariables();
+        
+        $this->Guest = new Guest($this->formData['csrf']);
         $this->UniFiController = new UniFiController();
+        
+        //var_dump( $this->Guest->validateCsrf($this->formData['csrf']) );
         
         $this->run();
     }
     
     public function run()
     {
-        $this->loadRequestVariables();
-        
         // Populate the UniFi site for which access is requested
         $this->setUniFiSite();
         
@@ -82,6 +84,12 @@ class GuestPortal
                 $this->renderLogin();
                 
             }
+        }
+        elseif($this->formData['csrf'] == "" || ! $this->Guest->validateCsrf($this->formData['csrf']))
+        {
+            /* SHow an error if the CSRF value is different to what's expected */
+            
+            $this->renderLogin($this->strings['error']['generic']);
         }
         elseif(! $this->validateMandatory(array('id', 'ap', 'email', 'site'), $this->formData))
         {
@@ -106,7 +114,7 @@ class GuestPortal
         {
             $this->Guest->email = $this->formData['email'];
             $this->Guest->accessPoint = $this->formData['ap'];
-            $this->Guest->device = $this->formData['id'];
+            $this->Guest->mac = $this->formData['id'];
             
             $this->Guest->authenticate();
             
@@ -119,14 +127,14 @@ class GuestPortal
                 
                 $this->UniFiController->connect();
                  
-                if($this->UniFiController->authoriseGuest($this->Guest->device, Settings::$session['duration'], $this->Guest->accessPoint))
+                if($this->UniFiController->authoriseGuest($this->Guest->mac, Settings::$session['duration'], $this->Guest->accessPoint))
                 {
                     
                     $excessDevices = $this->Guest->save();
                     
-                    foreach($excessDevices as $mac)
+                    foreach($excessDevices as $m)
                     {
-                        $this->UniFiController->unAuthoriseGuest($mac);
+                        $this->UniFiController->unAuthoriseGuest($m);
                     }
                     
                     $this->renderSuccess();
@@ -149,13 +157,15 @@ class GuestPortal
     // Shows a successful message and redirects
     private function renderSuccess()
     {
-        echo $this->Twig->render("success.twig", array('redirect' => false));        
+        echo $this->Twig->render("success.twig", array('redirect' => Settings::$portal['redirect_url']));        
     }
 
     // FUNCTION
     // Shows the login page and, optionally, an error message
     private function renderLogin($msg="")
     {
+        $this->formData['csrf'] = $this->Guest->csrf;
+        
         echo $this->Twig->render("login.twig", array('values' => $this->formData,
                                                      'loginMsg' => $msg,));
     }

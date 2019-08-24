@@ -3,4 +3,8 @@
             <h1>Success!</h1>
             
             <div>You're online!</div>
+            
+            {% if redirect != "" %}
+            <div>Redirecting...</div>
+            {% endif %}            
         {% endblock %}

@@ -6,7 +6,6 @@ use PDO;
 
 class GuestDatabase
 {
-    private $databaseFile = '/var/www/crossfit-portal/database/guests.db';
     private $pdo = null;
     
     public function __construct()
@@ -18,7 +17,7 @@ class GuestDatabase
     {
         if ($this->pdo == null)
         {
-            $this->pdo = new PDO("sqlite:".Settings::$database['file']);
+            $this->pdo = new PDO("sqlite:".Settings::$portal['database']);
             $this->createSchema();
         }
     }

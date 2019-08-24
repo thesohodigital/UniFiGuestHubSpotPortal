@@ -14,9 +14,11 @@ class Guest
 {
     public $email;
     public $mac;
-    public $devices = array();
     public $isAuthorised = false;
+    public $csrf;
     
+    private $previousCsrf = "";
+    private $devices = array();    
     private $db;
     private $profile = false;
     private $validLeadStatus = array("FOUNDING_MEMBER");
@@ -24,6 +26,25 @@ class Guest
     function __construct()
     {
         $this->db = new GuestDatabase();
+        $this->startSession();
+    }
+    
+    private function startSession()
+    {
+        session_start();
+        
+        if(isset($_SESSION['csrf']))
+        {
+            $this->previousCsrf = $_SESSION['csrf'];
+        }
+        
+        $this->csrf = bin2hex(random_bytes(32)); 
+        $_SESSION['csrf'] = $this->csrf;        
+    }
+    
+    private function endSession()
+    {
+        session_destroy();
     }
     
     /**
@@ -77,11 +98,11 @@ class Guest
          * not successful (ie. 0 rows updated) then insert a new device.
          */
         
-        $updateCount = $this->db->updateMacLastSeen($this->email, $this->device, time());
+        $updateCount = $this->db->updateMacLastSeen($this->email, $this->mac, time());
 
         if($updateCount < 1)
         {
-            $this->db->insertGuestMac($this->email, $this->device);
+            $this->db->insertGuestMac($this->email, $this->mac);
         }
         
         /**
@@ -108,6 +129,8 @@ class Guest
             
             $this->db->deleteExcessDevices($deletedRowIds);
         }
+        
+        $this->endSession();
         
         return $deletedMacs;
     }
@@ -165,6 +188,17 @@ class Guest
             {
                 return $k;
             }
+        }
+        
+        return false;
+    }
+
+    
+    public function validateCsrf($formToken)
+    {  
+        if($this->previousCsrf != "" && hash_equals($this->previousCsrf, $formToken))
+        {
+            return true;
         }
         
         return false;
