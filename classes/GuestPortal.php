@@ -29,6 +29,7 @@ class GuestPortal
             'ssid' => '' ,     // SSID of the network the guest has connected to
             'email' => '',      // Clients
             'site' => '',
+            'csrf' => '',
         ];
  
     private $Guest;
@@ -57,27 +58,9 @@ class GuestPortal
         $this->run();
     }
     
-    function run()
+    public function run()
     {
-        // Populate any GET data array, we expect all of these to be completed
-                             
-        foreach ($_GET as $k => $v)
-        {
-            if(key_exists($k, $this->formData))
-            {
-                $this->formData[ $k ] = strtolower(trim($v));
-            }
-        }
-        
-        // Populate any POST data
-                          
-        foreach ($_POST as $k => $v)
-        {
-            if(key_exists($k, $this->formData))
-            {
-                $this->formData[ $k ] = strtolower(trim($v));
-            }
-        }
+        $this->loadRequestVariables();
         
         // Populate the UniFi site for which access is requested
         $this->setUniFiSite();
@@ -100,7 +83,7 @@ class GuestPortal
                 
             }
         }
-        elseif(! $this->validateMandatory(array('id', 'ap', 'email'), $this->formData))
+        elseif(! $this->validateMandatory(array('id', 'ap', 'email', 'site'), $this->formData))
         {
             /* 
                 Even if the email address is valid, we can't authorise the guest without these
@@ -122,9 +105,8 @@ class GuestPortal
         else
         {
             $this->Guest->email = $this->formData['email'];
-            $this->Guest->mac = $this->formData['id'];
             $this->Guest->accessPoint = $this->formData['ap'];
-            $this->Guest->apiKey = Settings::$hubspot['api_key'];
+            $this->Guest->device = $this->formData['id'];
             
             $this->Guest->authenticate();
             
@@ -137,13 +119,14 @@ class GuestPortal
                 
                 $this->UniFiController->connect();
                  
-                if($this->UniFiController->authoriseGuest($this->Guest->mac, Settings::$session['duration'], $this->Guest->accessPoint))
+                if($this->UniFiController->authoriseGuest($this->Guest->device, Settings::$session['duration'], $this->Guest->accessPoint))
                 {
-                    $oldMac = $this->Guest->save();
                     
-                    if($oldMac !== false)
+                    $excessDevices = $this->Guest->save();
+                    
+                    foreach($excessDevices as $mac)
                     {
-                        $this->UniFi->unAuthoriseGuest($oldMac);
+                        $this->UniFiController->unAuthoriseGuest($mac);
                     }
                     
                     $this->renderSuccess();
@@ -164,14 +147,14 @@ class GuestPortal
 
     // FUNCTION
     // Shows a successful message and redirects
-    function renderSuccess()
+    private function renderSuccess()
     {
         echo $this->Twig->render("success.twig", array('redirect' => false));        
     }
 
     // FUNCTION
     // Shows the login page and, optionally, an error message
-    function renderLogin($msg="")
+    private function renderLogin($msg="")
     {
         echo $this->Twig->render("login.twig", array('values' => $this->formData,
                                                      'loginMsg' => $msg,));
@@ -179,7 +162,7 @@ class GuestPortal
 
     // FUNCTION
     // Validates that array keys exist and have length more than 0 
-    function validateMandatory($mandatoryVars, $checkArray)
+    private function validateMandatory($mandatoryVars, $checkArray)
     {
         foreach ($mandatoryVars as $k)
         {
@@ -190,6 +173,29 @@ class GuestPortal
         }
         
         return true;
+    }
+    
+    private function loadRequestVariables()
+    {
+        // Populate any GET data array, we expect all of these to be completed
+                             
+        foreach ($_GET as $k => $v)
+        {
+            if(key_exists($k, $this->formData))
+            {
+                $this->formData[ $k ] = strtolower(trim($v));
+            }
+        }
+        
+        // Populate any POST data
+                          
+        foreach ($_POST as $k => $v)
+        {
+            if(key_exists($k, $this->formData))
+            {
+                $this->formData[ $k ] = strtolower(trim($v));
+            }
+        }
     }
     
     private function setUniFiSite()

@@ -14,15 +14,16 @@ class Guest
 {
     public $email;
     public $mac;
+    public $devices = array();
     public $isAuthorised = false;
-    public $apiKey;
     
+    private $db;
     private $profile = false;
     private $validLeadStatus = array("FOUNDING_MEMBER");
     
     function __construct()
     {
-
+        $this->db = new GuestDatabase();
     }
     
     /**
@@ -42,13 +43,19 @@ class Guest
         {
             return false;
         }
-        else
+
+        $this->profile = json_decode($read);
+        
+        $this->db->connect();
+        
+        if($this->authorise())
         {
-            $this->profile = json_decode($read);
-            $this->authorise();
-            return true;
+            
         }
+        
+        return true;
     }
+
     
     /**
      * Saves a Guest to a local database
@@ -56,26 +63,53 @@ class Guest
      * A key/value pair is saved to a local database, the Guest's email
      * address and MAC address.
      *
-     * Returns the old MAC address if found, otherwise false if a new
-     * Guest was created.
+     * Returns deleted MAC addresses if guest has more deivces than is 
+     * allowed in the settings.
      */
     
     public function save()
     {
-        $db = new GuestDatabase;
+        $this->db->connect();
+
         
-        $oldMac = $db->getGuestMac($this->email);
+        /** 
+         * Try to update time last seen for this mac in the database, if not
+         * not successful (ie. 0 rows updated) then insert a new device.
+         */
         
-        if( ! is_null($oldMac) && $oldMac != $this->mac)
+        $updateCount = $this->db->updateMacLastSeen($this->email, $this->device, time());
+
+        if($updateCount < 1)
         {
-            $db->updateGuestMac($this->email, $this->mac);
-            return $oldMac;
+            $this->db->insertGuestMac($this->email, $this->device);
         }
-        else
+        
+        /**
+         * Here we check how many devices the user has and delete devices from the database,
+         * starting with the oldest first, to bring the total down to the max number defined
+         * in settings.
+         */
+        
+        $this->devices = $this->db->getGuestDevices($this->email);
+        $deviceCount = count($this->devices);
+
+        $deletedMacs = array();
+        $deletedRowIds = array();      
+        
+        if($deviceCount > Settings::$session['max_devices'])
         {
-            $db->insertGuest($this->email, $this->mac);   
-            return false;
+            while($deviceCount > Settings::$session['max_devices'])
+            { 
+                $deletedMacs[] = $this->devices[ $deviceCount-1 ]['mac'];
+                $deletedRowIds[] = $this->devices[ $deviceCount-1 ]['rowid'];
+                array_pop($this->devices);
+                $deviceCount = $deviceCount-1;
+            }
+            
+            $this->db->deleteExcessDevices($deletedRowIds);
         }
+        
+        return $deletedMacs;
     }
     
     /**
@@ -120,7 +154,20 @@ class Guest
     private function createApiUrl($request)
     {
         $baseUrl = "https://api.hubapi.com/";
-        return $baseUrl . $request . "/?property=hs_lead_status&propertyMode=value_only&hapikey=" . $this->apiKey;
+        return $baseUrl . $request . "/?property=hs_lead_status&propertyMode=value_only&hapikey=" . Settings::$hubspot['api_key'];
+    }
+    
+    private function findDevice($mac)
+    {
+        foreach ($this->devices as $k => $v)
+        {
+            if ($v['mac'] = $mac)
+            {
+                return $k;
+            }
+        }
+        
+        return false;
     }
 
 }

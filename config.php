@@ -27,11 +27,11 @@ $settings = [
             'version' => '',
         ],
         'session' => [
-            'duration' => '120',  
+            'duration' => '60',  
             'max_devices' => '2',
         ],
         'database' => [
-            'file' => '/path/to/db/guests.db',
+            'file' => '',
         ]
     ];
     
