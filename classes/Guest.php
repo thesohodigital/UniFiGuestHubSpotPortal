@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Guest Objet Class
+ * Guest Object Class
  *
  * When the Guest object has been created and with a MAC address and an email address set,
  * provides functions to authenticate and authroise the guest using HubSpot Contact
@@ -12,16 +12,18 @@ namespace TSD\UniFiGuestHubSpotPortal;
 
 class Guest
 {
-    public $email;
-    public $mac;
+    public $email = "";
+    public $mac = "";
+    public $firstName = "";
+    public $lastName = "";
     public $isAuthorised = false;
+    public $authenticated = false;
     public $csrf;
     
     private $previousCsrf = "";
     private $devices = array();    
     private $db;
     private $profile = false;
-    private $validLeadStatus = array("FOUNDING_MEMBER");
     
     function __construct()
     {
@@ -48,6 +50,44 @@ class Guest
     }
     
     /**
+     * Create a contact in HubSpot
+     *
+     * Creates a contact in HubSpot by submitting a form, which must been
+     * defined in HubSpot.
+     *
+     * Returns true on success, false if not.
+     */
+    
+    public function create()
+    {
+        $endpoint = 'https://forms.hubspot.com/uploads/form/v2/'. Settings::$hubspot['portal'] .'/'. Settings::$hubspot['form'];
+        
+        $str_post = "firstname=". urlencode($this->firstName)
+                    ."&lastname=". urlencode($this->lastName)
+                    ."&email=". urlencode($this->email)
+                    ."&hs_context=". urlencode(json_encode(array('pageName' => 'Guest WiFi Registration')));
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $str_post);
+        curl_setopt($ch, CURLOPT_URL, $endpoint);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/x-www-form-urlencoded'));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        
+        $result = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        
+        if($code != 204)
+        {
+            return false;
+        }
+        
+        curl_close($ch);
+        
+        return true;
+    }
+    
+    /**
      * Authenticate a Guest
      *
      * Authenticates a guest against HubSpot and if they exist, fetches
@@ -55,28 +95,32 @@ class Guest
      *
      * Returns true if authenticated, false if not.
      */
-     
+
     public function authenticate()
     {
-        $read = @file_get_contents($this->createApiUrl("contacts/v1/contact/email/" . $this->email . "/profile"));
+        $curl = curl_init();
         
-        if ($read === false)
+        $ch =  curl_init('https://api.hubapi.com/contacts/v1/contact/email/'. $this->email .'/profile/?property=hs_lead_status&propertyMode=value_only&hapikey='. Settings::$hubspot['api_key']);
+        
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+        
+        $result = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        
+        curl_close($ch);
+        
+        if($code != 200)
         {
             return false;
         }
+        
+        $this->profile = json_decode($result);
+        $this->authenticated = true;
 
-        $this->profile = json_decode($read);
-        
-        $this->db->connect();
-        
-        if($this->authorise())
-        {
-            
-        }
-        
         return true;
     }
-
     
     /**
      * Saves a Guest to a local database
@@ -144,41 +188,39 @@ class Guest
      * Returns true if authorised, false if not.
      */
 
-    private function authorise()
+    public function authorise()
     {        
         if($this->profile === false)
         {
             return false;
-        }    
-        
-        if(! isset($this->profile->properties->hs_lead_status))
+        }   
+ 
+        if (count(Settings::$hubspot['lead_status']) > 0)
         {
-            return false;
+            if(isset($this->profile->properties->hs_lead_status)
+               && in_array($this->profile->properties->hs_lead_status->value, Settings::$hubspot['lead_status']))
+            {
+                $this->isAuthorised = true;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
-
-        if(in_array($this->profile->properties->hs_lead_status->value, $this->validLeadStatus))
+        else
         {
-            $this->isAuthorised = true;
             return true;
         }
-        
-        return false;
     }
 
     /**
-     *
+     * Detetmines if a MAC address exists in a guest's device list.
      *
      * Returns true if a contact was found, or false if not.
      * Note: this return value does NOT indicate if the contact is authorised,
      * use $this->isAuthorised for that.
      */
-
-    
-    private function createApiUrl($request)
-    {
-        $baseUrl = "https://api.hubapi.com/";
-        return $baseUrl . $request . "/?property=hs_lead_status&propertyMode=value_only&hapikey=" . Settings::$hubspot['api_key'];
-    }
     
     private function findDevice($mac)
     {
@@ -193,7 +235,12 @@ class Guest
         return false;
     }
 
-    
+
+    /**
+     * Detetmines if a guest's CSRF token is valid
+     *
+     * Returns true if valid or false if not.
+     */    
     public function validateCsrf($formToken)
     {  
         if($this->previousCsrf != "" && hash_equals($this->previousCsrf, $formToken))

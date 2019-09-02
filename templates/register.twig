@@ -1,0 +1,26 @@
+{% extends "skeleton.twig" %}
+        {% block body %}
+            <h1>{{lang.hello}}</h1>
+            
+            <div>{% if loginMsg == "" %}{{lang.register}}{% else %}{{ loginMsg }}{% endif %}</div>
+            
+            <form method='post' action='/'>
+            <input type='hidden' name='id' value='{{values.id}}' />
+            <input type='hidden' name='ap' value='{{values.ap}}' />
+            <input type='hidden' name='url' value='{{values.url}}' />
+            <input type='hidden' name='site' value='{{values.site}}' />
+            <input type='hidden' name='csrf' value='{{values.csrf}}' />
+            <input type='hidden' name='page' value='register' />
+            
+            <input type='text' name='firstname' class='email' placeholder='{{lang.first_name}}' value='{{values.firstname}}'>
+            
+            <input type='text' name='lastname' class='email' placeholder='{{lang.last_name}}' value='{{values.lastname}}'>
+            
+            <input type='email' name='email' class='email' placeholder='your@email.com'  value='{{values.email}}'>
+            
+            <div><input type='checkbox' class='checkbox' name='consent' {% if values.consent == "on" %}checked {% endif %}/> {{lang.marketing}}</div>
+            
+            <input type='submit' value='{{lang.submit}}' class='button' />
+            </form>
+            <div class='policy'><a href='#'>{{lang.privacy_policy}}</a></div>
+        {% endblock %}

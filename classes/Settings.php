@@ -10,6 +10,7 @@ class Settings
     public static $unifi;
     public static $session;
     public static $portal;
+    public static $lang;
     
     public function load($settings)
     {        
@@ -17,6 +18,7 @@ class Settings
         Settings::$unifi = $settings['unifi'];
         Settings::$session = $settings['session'];
         Settings::$portal = $settings['portal'];
+        Settings::$lang = $settings['lang'];
     }
 }
 ?>
