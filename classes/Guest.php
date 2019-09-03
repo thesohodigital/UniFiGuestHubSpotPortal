@@ -192,26 +192,22 @@ class Guest
     {        
         if($this->profile === false)
         {
-            return false;
-        }   
- 
-        if (count(Settings::$hubspot['lead_status']) > 0)
+            $this->isAuthorised = false;
+        }
+        elseif (count(Settings::$hubspot['lead_status']) > 0)
         {
             if(isset($this->profile->properties->hs_lead_status)
                && in_array($this->profile->properties->hs_lead_status->value, Settings::$hubspot['lead_status']))
             {
                 $this->isAuthorised = true;
-                return true;
-            }
-            else
-            {
-                return false;
             }
         }
         else
         {
-            return true;
+            $this->isAuthorised = true;
         }
+        
+        return $this->isAuthorised;
     }
 
     /**

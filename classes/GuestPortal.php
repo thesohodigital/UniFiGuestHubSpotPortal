@@ -34,7 +34,7 @@ class GuestPortal
     private $Guest;
     private $UniFiController;
     
-    private $debugMessages = array();
+    public $debugMessages = array();
     
     function __construct()
     {   
@@ -73,7 +73,7 @@ class GuestPortal
              */
             if (! $this->validateMandatory(array('id', 'ap', 'ssid', 'site'), $this->formData))
             {
-                $this->debugMessages[] = "Mandaory values not passed in URL from Unifi.";
+                $this->debugMessages[] = "Mandatory values not passed in URL from Unifi.";
                 $this->renderLogin(Settings::$lang['generic']);
             }
             else
@@ -134,7 +134,7 @@ class GuestPortal
      
     private function loginPage()
     {        
-        if (! $this->Guest->authenticate())
+        if (! $this->Guest->authenticated)
         {
             /**
              * If we can't authenticate the guest (ie. we don't recognise their email) then
@@ -151,23 +151,14 @@ class GuestPortal
                 If the guest is a valid HubSpot contact, then try to authorise them
                 and show them a success page.
             */
-            
-            $this->UniFiController->connect();
              
-            if($this->UniFiController->authoriseGuest($this->Guest->mac, Settings::$session['duration'], $this->Guest->accessPoint))
+            if($this->processUniFiAuth())
             {
-                
-                $excessDevices = $this->Guest->save();
-                
-                foreach($excessDevices as $m)
-                {
-                    $this->UniFiController->unAuthoriseGuest($m);
-                }
-                
                 $this->renderSuccess();
             }
             else
-            { 
+            {
+                $this->debugMessages[] = "Couldn't authorise guest on UniFi controller.";
                 $this->renderLogin(Settings::$lang['generic']);
             }
         }
@@ -212,7 +203,15 @@ class GuestPortal
 
             $this->Guest->save();
             
-            $this->renderSuccess();
+            if($this->processUniFiAuth())
+            {
+                $this->renderSuccess();
+            }
+            else
+            {
+                $this->debugMessages[] = "Couldn't authorise guest on UniFi controller.";
+                $this->renderLogin(Settings::$lang['generic']);
+            }
         }
     }   
     
@@ -314,6 +313,7 @@ class GuestPortal
          * file so we will use that. If not, then try to find it via a couple
          * of methods.
          */
+         
         
         if(Settings::$unifi['site'] == "")
         {
@@ -323,15 +323,18 @@ class GuestPortal
              */
              
             if($this->formData['site'] == "")
-            {
-                
-                $this->formData['site'] = $this->detectSiteFromUrl();
+            {   
+                Settings::$unifi['site'] = $this->detectSiteFromUrl();
             }
-            
-            Settings::$unifi['site'] = $this->formData['site'];
+            else
+            {
+                Settings::$unifi['site'] = $this->formData['site'];
+            }
         }
         
-        if(Settings::$unifi['site'] == "")
+        $this->formData['site'] = Settings::$unifi['site'];
+        
+        if(Settings::$unifi['site'] == "" || $this->formData['site'] == "")
         {
             $this->debugMessage[] = "Site is not specified in settings and it could not be automatically detected.";
             return false;
@@ -361,7 +364,34 @@ class GuestPortal
         
         return $site;
     }
-
+    
+    /**
+     * Processes an authorisation for the guset on the UniFi Controller
+     *
+     * Returns true on success and false on failure
+     *
+     */   
+    
+    private function processUniFiAuth()
+    {
+        $this->UniFiController->connect();
+         
+        if($this->UniFiController->authoriseGuest($this->Guest->mac, Settings::$session['duration'], $this->Guest->accessPoint))
+        {
+            $excessDevices = $this->Guest->save();
+            
+            foreach($excessDevices as $m)
+            {
+                $this->UniFiController->unAuthoriseGuest($m);
+            }
+            
+            return true;
+        }
+        else
+        { 
+            return false;
+        }  
+    }
 }
 
 ?>

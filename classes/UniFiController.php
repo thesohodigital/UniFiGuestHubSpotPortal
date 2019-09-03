@@ -28,6 +28,7 @@ class UniFiController
     public function connect()
     {
         $this->connection = new \UniFi_API\Client(Settings::$unifi['user'], Settings::$unifi['password'], Settings::$unifi['controller_url'], Settings::$unifi['site'], Settings::$unifi['version']);
+        //$this->connection->set_debug(true);
         $this->connection->login();
     }
  
