@@ -9,7 +9,9 @@
  * portal           database            Full path to a directory outside of web root which the web server can write to
  * portal           redirect_url        If set, portal will redirect to this URL after guest has authenticated
  * hubspot          api_key             Your HubSpot API key
- * hubspot          lead_status         Guest must have a lead status in this list to be granted access
+ * hubspot          lead_status         Optiona: guest must have a lead status in this list to be granted access
+ * hubspot          portal              The ID of the HubSpot portal (see README)
+ * hubspot          form                The form ID of the hubspot form (see README)
  * unifi            user                An admin username for your UniFi Controller
  * unifi            password            Password for the UniFi Controller user
  * unifi            controller_url      The URL of your controller, note this MUST start with https://
