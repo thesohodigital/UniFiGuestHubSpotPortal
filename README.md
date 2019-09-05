@@ -6,6 +6,8 @@ Optionally, a list of HubSpot lead statuses can be specified and only guests wit
 
 If the email address if not recognised, the guest is prompted to register and if they choose to do so, a new contact is created in HubSpot before WiFi access is granted.
 
+![Login flow](https://thesohodigital.com/images/external/hubspot-unifi-flow.png)
+
 ## Prerequisites
 1. Webserver with PHP and SQLite3 installed
 
@@ -51,4 +53,3 @@ In the Guest Portal settings, enter the URL or IP address of the server hosting 
 ### 6. Edit config.php
 
 Open config.php in a text editor, read the settings descriptions and input your values.
-
