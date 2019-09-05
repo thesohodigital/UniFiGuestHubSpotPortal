@@ -18,6 +18,10 @@ Download a copy of the project and upload to your webserver, or clone the reposi
 
 `git clone https://github.com/thesohodigital/UniFiGuestHubSpotPortal`
 
+Run this command to download the dependencies:
+
+`composer update`
+
 ### 2. Configure the web server
 URL rewriting is required for the portal to work.
 
