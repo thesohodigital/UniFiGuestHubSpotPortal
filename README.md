@@ -2,6 +2,8 @@ UniFi Guest HubSpot Portal
 ============================
 A simple guest portal for Ubiquiti UniFi which integrates with HubSpot for authentication and authorisation of WiFi guests.
 
+![alt text](https://thesohodigital.com/images/external/portal-1.png)
+
 Prerequisites
 1. Webserver with PHP and SQLite3 installed
 
