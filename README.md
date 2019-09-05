@@ -35,7 +35,9 @@ If you use Nginx, add the following line to the server block in the Nginx config
 By default, the portal creates a guests.db database file in the directory /etc/wifilogin 
 
 `sudo mkdir /etc/wifiportal/`
+
 `sudo chown www-data:www-data /etc/wifilogin/`
+
 `sudo chmod 644 /etc/wifilogin`
 
 ### 4. Setup UniFi Controller
