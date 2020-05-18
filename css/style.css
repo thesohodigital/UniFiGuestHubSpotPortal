@@ -66,6 +66,45 @@ a:hover{
     text-decoration: none;
 }
 
+#overlay-loading{
+	position: fixed; /* Sit on top of the page content */
+	display: none;
+	width: 100%; /* Full width (cover the whole page) */
+	height: 100%; /* Full height (cover the whole page) */
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0,0,0,0.5); /* Black background with opacity */
+	z-index: 2; 
+	margin: 0;
+	padding: 0;
+}
+
+#overlay-text{
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	font-size: 50px;
+	color: white;
+	transform: translate(-50%,-50%);
+	-ms-transform: translate(-50%,-50%);
+}
+
+#overlay-spinner {
+	border: 8px solid #f3f3f3;
+	border-top: 8px solid #000000;
+	border-radius: 50%;
+	width: 60px;
+	height: 60px;
+	animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
+}
+
 @media screen and (min-width:801px){
     #content{
         width: 400px;

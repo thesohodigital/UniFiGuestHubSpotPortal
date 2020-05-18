@@ -20,7 +20,7 @@
             
             <div><input type='checkbox' class='checkbox' name='consent' {% if values.consent == "on" %}checked {% endif %}/> {{lang.marketing}}</div>
             
-            <input type='submit' value='{{lang.submit}}' class='button' />
+            <input type='submit' id='formSubmit' value='{{lang.submit}}' class='button' />
             </form>
             <div class='policy'><a href='#'>{{lang.privacy_policy}}</a></div>
         {% endblock %}
