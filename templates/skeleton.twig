@@ -8,9 +8,20 @@
         {% if redirect != "" %}
         <meta http-equiv="refresh" content="5;url={{redirect}}" />
         {% endif %}
-
+		<script>
+		window.addEventListener('load', function () {
+			document.getElementById('formSubmit').addEventListener('click', function(){
+				document.getElementById('overlay-loading').style.display = 'block';
+			});
+		})			
+		</script>
     </head>
     <body>
+		<div id='overlay-loading'>
+			<div id='overlay-text'>
+				<div id='overlay-spinner'></div>
+			</div>
+		</div>	
         <div id='content'>
             {% block body %}{% endblock %}
         </div>

@@ -3,7 +3,7 @@
             <h1>Guest WiFi</h1>
             <div>{% if loginMsg == "" %}{{lang.enter_email}}{% else %}{{ loginMsg }}{% endif %}</div>
             
-            <form method='post' action='/'>
+            <form method='post' action='/hubspot/index.php'>
             <input type='hidden' name='id' value='{{values.id}}' />
             <input type='hidden' name='ap' value='{{values.ap}}' />
             <input type='hidden' name='url' value='{{values.url}}' />
@@ -11,7 +11,7 @@
             <input type='hidden' name='csrf' value='{{values.csrf}}' />
             <input type='hidden' name='page' value='login' />
             
-            <input name='email' type='email' class='email' placeholder='example@domain.com' >
-            <input type='submit' value='{{lang.login}}' class='button'>
+            <input name='email' type='email' class='email' placeholder='example@domain.com'>
+            <input type='submit' id='formSubmit' value='{{lang.login}}' class='button'>
             </form>
         {% endblock %}
